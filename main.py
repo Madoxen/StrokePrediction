@@ -12,13 +12,16 @@ for c in stroke.columns:
 
 
 value_mapper_dict = {
-    # i think we should drop the other (one occurrence), or classify "other" as Female
+    #Bartek: i think we should drop the other (one occurrence), or classify "other" as Female
+    #Paweł: Yeah, that's only one data point, not worth examining imo
     'gender': {'Female': 0, 'Male': 1, 'Other': 2},
     'ever_married': {'No': 0, 'Yes': 1},
     # order is from frequency, values are my (Bartek) suggestions
+    #Paweł: Sounds good
     'work_type': {'Private': 3, 'Self-employed': 4, 'children': 0, 'Govt_job': 2, 'Never_worked': 1},
     'Residence_type': {'Urban': 0, 'Rural': 1},
     # shouldn't 'unknown' be dropped or assigned to most frequent? (possible positive corelation between this one and 'children' in work type)
+    #Paweł: Let's not drop unknown since it makes up much of a dataset. 
     'smoking_status': {'never smoked': 0, 'Unknown': 1, 'formerly smoked': 2, 'smokes': 3},
 }
 
