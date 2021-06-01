@@ -1,6 +1,6 @@
 import pandas as pd
 from collections import Counter
-
+import numpy as np
 
 stroke = pd.read_csv('healthcare-dataset-stroke-data.csv')
 
@@ -9,6 +9,11 @@ stroke.drop('id', inplace=True, axis=1)
 for c in stroke.columns:
     if c not in ['bmi', 'avg_glucose_level', 'age']:
         print(c, ":", Counter(stroke[c]))
+
+
+
+nan = [np.nan]
+print(stroke.query("bmi == @nan and smoking_status == 'Unknown'")) # no corellation
 
 
 value_mapper_dict = {
@@ -28,8 +33,8 @@ value_mapper_dict = {
 
 for (k, v) in value_mapper_dict.items():
     stroke[k] = stroke[k].map(v)
-
 print(stroke)
+
 
 # should we map data from nominal to integer with count (most frequent are 0 and so on) (it could lead to inconsistence, (ex "Yes" is 0))
 # or it should be decided by us like above
