@@ -1,9 +1,17 @@
+from numpy.core.fromnumeric import mean
 import pandas as pd
 from collections import Counter
 import numpy as np
+from sklearn.model_selection import train_test_split 
+from sklearn.naive_bayes import GaussianNB
+import numpy as np
+
+
 
 stroke = pd.read_csv('healthcare-dataset-stroke-data.csv')
 
+
+stroke = stroke.query("gender != 'Other'") # oh no 
 
 stroke.drop('id', inplace=True, axis=1)
 for c in stroke.columns:
@@ -16,29 +24,68 @@ nan = [np.nan]
 print(stroke.query("bmi == @nan and smoking_status == 'Unknown'")) # no corellation
 
 
-value_mapper_dict = {
-    #Bartek: i think we should drop the other (one occurrence), or classify "other" as Female
-    #Paweł: Yeah, that's only one data point, not worth examining imo
-    'gender': {'Female': 0, 'Male': 1, 'Other': 2},
-    'ever_married': {'No': 0, 'Yes': 1},
-    # order is from frequency, values are my (Bartek) suggestions
-    #Paweł: Sounds good
-    'work_type': {'Private': 3, 'Self-employed': 4, 'children': 0, 'Govt_job': 2, 'Never_worked': 1},
-    'Residence_type': {'Urban': 0, 'Rural': 1},
-    # shouldn't 'unknown' be dropped or assigned to most frequent? (possible positive corelation between this one and 'children' in work type)
-    #Paweł: Let's not drop unknown since it makes up much of a dataset. 
-    'smoking_status': {'never smoked': 0, 'Unknown': 1, 'formerly smoked': 2, 'smokes': 3},
+
+nominal_dict = {
+    'age': {
+        'bins': [0, 18, 35, 65],
+        'names': ['0-18', '18-35', '35-65', '65+']
+    },
+    'avg_glucose_level': {
+        'bins': [0, 70, 130],
+        'names': ['low', 'normal', 'high']
+    },
+    'bmi': {
+        'bins': [0, 18.5, 25, 30, 35],
+        'names': ['underweight', 'normal', 'overweight', 'obese', 'extremely_obese']
+    }
+
 }
 
+for i in nominal_dict.keys():
+    pair = nominal_dict[i]
+    d = dict(enumerate(pair['names'], 1))
+    bins = pair['bins']
+
+    stroke[i] = np.vectorize(d.get)(np.digitize(stroke[i], bins))
+
+    
+
+
+value_mapper_dict = {
+    'gender': {'Female': 0, 'Male': 1},
+    'ever_married': {'No': 0, 'Yes': 1},
+    'work_type': {'Private': 3, 'Self-employed': 4, 'children': 0, 'Govt_job': 2, 'Never_worked': 1},
+    'Residence_type': {'Urban': 0, 'Rural': 1},
+    'smoking_status': {'never smoked': 0, 'Unknown': 1, 'formerly smoked': 2, 'smokes': 3},
+    'age': {'0-18': 0, '18-35': 1, '35-65': 2, '65+': 3},
+    'avg_glucose_level': {'low': 0, 'normal': 1, 'high': 2},
+    'bmi': {'underweight': 0, 'normal': 1, 'overweight': 2, 'obese': 3, 'extremely_obese': 4}
+}
 
 for (k, v) in value_mapper_dict.items():
     stroke[k] = stroke[k].map(v)
 print(stroke)
 
+stroke['bmi'] = stroke['bmi'].fillna(mean(stroke['bmi'].dropna())) #nans are assigned as mean
 
-# should we map data from nominal to integer with count (most frequent are 0 and so on) (it could lead to inconsistence, (ex "Yes" is 0))
-# or it should be decided by us like above
+x = stroke.iloc[:,:-1]
+y = stroke.iloc[:,-1]
 
-# what should we do with NaNs? (in bmi)
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.20, random_state=1)
 
-# should we classify age and bmi into ranges? (yes for bayes usage)
+clf = GaussianNB()
+
+clf.fit(x, y)
+
+#test = [1,1,0,0,0,3,0,1,1,1] #Bartek
+
+test = [1,2,1,0,1,4,0,1,1,0] #Bartek's dad
+
+#test = [1,1,0,0,0,4,1,1,1,1] #Pawel
+
+#test = [1,3,0,1,1,3,0,2,4,2] # testing for someone who got the stroke
+
+X = np.array(test).reshape(1,-1)
+
+print ("================================================================================= Prediction of : ", list(clf.predict(X)))
+print(stroke.columns)
